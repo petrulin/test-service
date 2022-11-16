@@ -5,3 +5,20 @@ server:
 spring:
   application:
     name: test-service
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+    restart:
+      enabled: true
+    refresh:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+      path-mapping:
+        prometheus: metrics
+      base-path: /
