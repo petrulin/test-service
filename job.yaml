@@ -1,0 +1,41 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "initdb"
+spec:
+  template:
+    metadata:
+      name: "initdb"
+    spec:
+      restartPolicy: Never
+      initContainers:
+        - name: check-db-ready
+          image: postgres:latest
+          env:
+            - name: POSTGRES_HOST
+              value: "my-postgresql"
+            - name: POSTGRES_PORT
+              value: "5432"
+          command:
+            - sh
+            - "-c"
+            - |
+              until pg_isready -h $POSTGRES_HOST  -p  $POSTGRES_PORT;
+              do echo waiting for database; sleep 2; done;
+      containers:
+        - name: initdb
+          image: postgres:latest
+          command:
+            - sh
+            - "-c"
+            - |
+              psql postgresql://$USER_NAME:$PASSWORD@my-postgresql:5432/postgres <<'EOF'
+                CREATE TABLE public.user(id BIGSERIAL NOT NULL PRIMARY KEY, user_name VARCHAR(100), first_name VARCHAR(100), last_name VARCHAR(100), email VARCHAR(255), phone VARCHAR(20));
+              EOF
+          envFrom:
+            - secretRef:
+                name: dbpassword
+            - configMapRef:
+                name: my-config
+  backoffLimit: 2

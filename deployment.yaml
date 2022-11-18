@@ -12,6 +12,7 @@ spec:
       protocol: TCP
   selector:
     app: test-service
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -33,6 +34,11 @@ spec:
           ports:
             - name: web
               containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: dbpassword
+            - configMapRef:
+                name: my-config
           startupProbe:
             httpGet:
               path: health
@@ -52,17 +58,24 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 1
             failureThreshold: 3
+      volumes:
+        - name: config
+          configMap:
+            name: my-config
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: test-service-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
 spec:
+  ingressClassName: nginx
   rules:
     - host: arch.homework
       http:
         paths:
-          - path: /health
+          - path: /(.*)
             pathType: Prefix
             backend:
               service:
@@ -77,6 +90,7 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /student/$1
 spec:
+  ingressClassName: nginx
   rules:
     - host: arch.homework
       http:
