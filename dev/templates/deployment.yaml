@@ -33,7 +33,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: {{ .Values.image.repository }}
           ports:
-            - name: web
+            - name: http
               containerPort: {{ .Values.service.port }}
           envFrom:
             - secretRef:
